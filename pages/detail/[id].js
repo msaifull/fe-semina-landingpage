@@ -1,5 +1,6 @@
-/* eslint-disable @next/next/no-img-element */
 /* eslint-disable react/no-unescaped-entities */
+/* eslint-disable @next/next/no-img-element */
+import React, { useEffect, useState } from "react";
 import Head from "next/head";
 import Button from "../../components/Button";
 import CardEvent from "../../components/CardEvent";
@@ -9,16 +10,17 @@ import Statistics from "../../components/Statistics";
 import Stories from "../../components/Stories";
 import { useRouter } from "next/router";
 import { getData } from "../../utils/fetchData";
-import { formatDate } from "../../utils/formatDate";
 import moment from "moment";
-import React, { useEffect, useState } from "react";
+import { formatDate } from "../../utils/formatDate";
+import Cookies from "js-cookie";
 
-export default function DetailPage({ detailPage }) {
+export default function DetailPage({ detailPage, id }) {
   const [data, setData] = useState([]);
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await getData("api/v1/participants/landing-page");
+
         setData(res.data);
       } catch (err) {}
     };
@@ -28,7 +30,12 @@ export default function DetailPage({ detailPage }) {
 
   const router = useRouter();
   const handleSubmit = () => {
-    router.push("/checkout");
+    const token = Cookies.get("token");
+    if (!token) {
+      return router.push("/signin");
+    } else {
+      router.push(`/checkout/${id}`);
+    }
   };
   return (
     <>
@@ -45,7 +52,7 @@ export default function DetailPage({ detailPage }) {
       <div className="preview-image bg-navy text-center">
         <img
           src="/images/details-image.png"
-          className="img-content /"
+          className="img-content"
           alt="semina"
         />
       </div>
@@ -58,16 +65,14 @@ export default function DetailPage({ detailPage }) {
               <p className="details-paragraph">{detailPage.about}</p>
             </div>
             <div className="keypoints">
-              <div className="d-flex align-items-start gap-3">
-                {detailPage.keyPoint.map((key, i) => {
-                  return (
-                    <div className="d-flex align-items-start gap-3" key={i}>
-                      <img src="/icons/ic-check.svg" alt="semina" />
-                      <span>{key}</span>
-                    </div>
-                  );
-                })}
-              </div>
+              {detailPage.keyPoint.map((key, i) => {
+                return (
+                  <div className="d-flex align-items-start gap-3" key={i}>
+                    <img src="/icons/ic-check.svg" alt="semina" />
+                    <span>{key}</span>
+                  </div>
+                );
+              })}
             </div>
             <div className="map-location">
               <h6>Event Location</h6>
@@ -108,7 +113,7 @@ export default function DetailPage({ detailPage }) {
               <span>/person</span>
             </div>
             <div className="d-flex gap-3 align-items-center card-details">
-              <img src="/icons/ic-marker.svg" alt="semina" />
+              <img src="/icons/ic-marker.svg" alt="semina" />{" "}
               {detailPage.venueName}
             </div>
             <div className="d-flex gap-3 align-items-center card-details">
@@ -116,7 +121,7 @@ export default function DetailPage({ detailPage }) {
               {moment(detailPage.date).format("HH.MM A")}
             </div>
             <div className="d-flex gap-3 align-items-center card-details">
-              <img src="/icons/ic-calendar.svg" alt="semina" />
+              <img src="/icons/ic-calendar.svg" alt="semina" />{" "}
               {formatDate(detailPage.date)}
             </div>
 
@@ -129,7 +134,7 @@ export default function DetailPage({ detailPage }) {
         </div>
       </div>
 
-      <CardEvent data={data} title="Similiar Event" subTitle="Next One" />
+      <CardEvent data={data} title="Similiar Events" subTitle="Next One" />
       <Stories />
       <Statistics />
       <Footer />
@@ -144,6 +149,6 @@ export async function getServerSideProps(context) {
   const res = req.data;
 
   return {
-    props: { detailPage: res },
+    props: { detailPage: res, id: context.params.id },
   };
 }
